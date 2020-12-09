@@ -17,7 +17,7 @@ public class TestUser {
 	UserService us = new UserService();
 	UserRepository ur = new UserRepository();
 
-	//@Test
+	@Test
 	public void testAddUser() throws ValidationException {
 		Role role = new Role("Admin");
 		Role role2 = new Role("General User");
@@ -34,7 +34,7 @@ public class TestUser {
 		//assertTrue(check);
 	}
 	
-	//@Test
+//	@Test
 	public void testAddUserNegative() throws ValidationException{
 		Role role = new Role("Admin");
 		User user5 = new User("Sushmita", "Sush12@er", "sushm@ernm.com", "f", "rajasthan", "Aries", role);
