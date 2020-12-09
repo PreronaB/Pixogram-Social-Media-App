@@ -100,7 +100,6 @@ public class UserRepository {
 	public Content addContent(Content content) {
 		em.getTransaction().begin();
 		em.persist(content);
-		// em.persist(content);
 		em.getTransaction().commit();
 		return content;
 
