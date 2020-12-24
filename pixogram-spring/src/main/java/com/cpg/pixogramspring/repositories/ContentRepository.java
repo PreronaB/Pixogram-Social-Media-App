@@ -10,8 +10,8 @@ public interface ContentRepository extends JpaRepository<Content, Integer>  {
 	
 	public Content findByCaption(String caption);
 	
-	@Query("select u from User u where u.user_id=?1")
-	public User findUser(int user_id);
+//	@Query("select u from User u where u.user_id=?1")
+//	public User findUser(int user_id);
 
 	@Query("select c from Content c where c.user=?1")
 	public User findUserByContent(User user);

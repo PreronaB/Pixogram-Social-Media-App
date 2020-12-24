@@ -29,7 +29,7 @@ public class Content {
 	private String filetype;
 	@ApiModelProperty(notes = "Like user's content")
 	private int likes;
-	@ApiModelProperty(notes = "Unlike user's content")
+	@ApiModelProperty(notes = "Dislike user's content")
 	private int dislikes;
 	@ApiModelProperty(notes = "The info of the user who is uploading ")
 	@ManyToOne(cascade = {CascadeType.PERSIST,CascadeType.MERGE,CascadeType.REFRESH})
@@ -37,7 +37,7 @@ public class Content {
 	private User user;
 	@ApiModelProperty(notes = "The comment for a particular content ")
 	@OneToMany(cascade = CascadeType.ALL)
-	@JoinColumn(name = "comment", referencedColumnName = "content_id")
+	@JoinColumn(name = "content", referencedColumnName = "content_id")
 	private List<Comment> comments;
 	
 	public Content() {

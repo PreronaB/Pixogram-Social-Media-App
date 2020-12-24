@@ -1,44 +1,23 @@
 package com.cpg.pixogramspring.services;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import com.cpg.pixogramspring.entities.Role;
+import java.util.List;
 import com.cpg.pixogramspring.entities.User;
 import com.cpg.pixogramspring.exceptions.ValidationException;
-import com.cpg.pixogramspring.repositories.UserRepository;
 
-@Service
-public class UserService {
+public interface UserService {
 	
-	@Autowired
-	private UserRepository userRepository;
-
-	public UserRepository getUserRepository() {
-		return userRepository;
-	}
-
-	public void setUserRepository(UserRepository userRepository) {
-		this.userRepository = userRepository;
-	}	
+	public User addUser(User user) throws ValidationException;
 	
+	public void deleteUser(int user_id); 
 	
-	public void addUser(User user) throws ValidationException {
-		final String passwordpattern = "^(?=.*[0-9])" + "(?=.*[a-z])(?=.*[A-Z])" + "(?=.*[@#$%^&+=])" + "(?=\\S+$).{8,20}$";
-		final String emailpattern = "^(.+)@(.+)$";
-		String pswrd = user.getPassword();
-		String email = user.getEmail();
-		if (email.matches(emailpattern)) {
-			if (pswrd.matches(passwordpattern)) {
-				userRepository.save(user);
-			} else {
-				throw new ValidationException("Use a correct Password(minimum length 8)");
-			}
-		} else {
-			throw new ValidationException("Use a correct Email");
-		}
-		
-	}	
+	public List<User> getAllUsers();
 	
+	public User loginUser(String email, String password);
+	
+	public User getUserById(int user_id);
+	
+	public User getUserByEmail(String email);
+	
+	public User updateUser(User user);
 
 }

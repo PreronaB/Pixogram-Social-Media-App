@@ -7,11 +7,13 @@ import com.cpg.pixogramspring.entities.Role;
 import com.cpg.pixogramspring.entities.User;
 
 public interface UserRepository extends JpaRepository<User, Integer> {
+	
 	public User findByEmail(String email);
 	
+	@Query("select u from User u where u.user_id=?1")
+	public User findUser(int user_id);
+	
 	public User findByEmailAndPassword(String email, String password);
-	
-	
 	
 	@Query("SELECT count(u) FROM User u")
 	 Long countUsers();

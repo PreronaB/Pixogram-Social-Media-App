@@ -28,8 +28,8 @@ public class PixogramSpringApplication {
 		return new Docket(DocumentationType.SWAGGER_2)
 				.apiInfo(apiInfo())
 				.select()
-				.paths(PathSelectors.ant("/api/*"))
 				.apis(RequestHandlerSelectors.basePackage("com.cpg"))
+				.paths(PathSelectors.ant("/api/**"))
 				.build();
 	}
 	private ApiInfo apiInfo(){
