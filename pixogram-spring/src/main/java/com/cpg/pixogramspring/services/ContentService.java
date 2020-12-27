@@ -5,26 +5,22 @@ import java.util.List;
 
 import org.springframework.web.multipart.MultipartFile;
 
-import com.cpg.pixogramspring.entities.Content;
-import com.cpg.pixogramspring.exceptions.ContentNotFoundException;
-import com.cpg.pixogramspring.exceptions.UserNotFoundException;
+import com.cpg.pixogramspring.models.Content;
 
 public interface ContentService {
-	
-	public Content uploadFile(MultipartFile file, String caption, int user_id) throws IllegalStateException, IOException, UserNotFoundException;
-	
-	public Content findContent(int content_id) throws ContentNotFoundException;
-	
-	public List<Content> allContent();
-	
-	public void deleteContent(int content_id) throws ContentNotFoundException;
-	
-	//public Content updateContent(Content content) throws ContentNotFoundException;
-	
-	public Content addComment(int user_id,int content_id,String comment);
-	
-	public Content addLikes(int content_id) throws ContentNotFoundException;
-	
-	public Content addDislikes(int content_id) throws ContentNotFoundException;
+
+	Content uploadFile(MultipartFile file, String caption, int user_id) throws IllegalStateException, IOException;
+
+	Content findContent(int content_id);
+
+	List<Content> allContent();
+
+	void deleteContent(int content_id);
+
+	Content addComment(int user_id, int content_id, String comment);
+
+	Content addLikes(int content_id);
+
+	Content addDislikes(int content_id);
 
 }

@@ -3,36 +3,33 @@ package com.cpg.pixogramspring.services.Impl;
 import java.util.List;
 import java.util.Optional;
 
+import javax.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import com.cpg.pixogramspring.entities.Role;
-import com.cpg.pixogramspring.entities.User;
-import com.cpg.pixogramspring.exceptions.UserAlreadyExistsException;
-import com.cpg.pixogramspring.exceptions.UserNotFoundException;
+
+import com.cpg.pixogramspring.constants.UserConstants;
+import com.cpg.pixogramspring.models.Comment;
+import com.cpg.pixogramspring.models.Content;
+import com.cpg.pixogramspring.models.Followers;
+import com.cpg.pixogramspring.models.Role;
+import com.cpg.pixogramspring.models.User;
+import com.cpg.pixogramspring.exceptions.AlreadyExistsException;
+import com.cpg.pixogramspring.exceptions.NotFoundException;
 import com.cpg.pixogramspring.exceptions.ValidationException;
 import com.cpg.pixogramspring.repositories.UserRepository;
 import com.cpg.pixogramspring.services.UserService;
 
 @Service
-public class UserServiceImpl implements UserService{
-	
-	
-	
-	@Value("User Already Exists!")
-	private String userAlreadyExistsMessage;
-	@Value("User not found!!")
-	private String userNotFoundMessage;
-	@Value("Use a correct Password(minimum length 8)")
-	private String passwordValidation;
-	@Value("Use a correct Email")
-	private String emailValidation;
-	
+public class UserServiceImpl implements UserService {
+
 	@Autowired
 	private UserRepository userRepository;
-	
+
+	@Override
 	public User addUser(User user) throws ValidationException {
-		final String passwordpattern = "^(?=.*[0-9])" + "(?=.*[a-z])(?=.*[A-Z])" + "(?=.*[@#$%^&+=])" + "(?=\\S+$).{8,20}$";
+		final String passwordpattern = "^(?=.*[0-9])" + "(?=.*[a-z])(?=.*[A-Z])" + "(?=.*[@#$%^&+=])"
+				+ "(?=\\S+$).{8,20}$";
 		final String emailpattern = "^(.+)@(.+)$";
 		String pswrd = user.getPassword();
 		String email = user.getEmail();
@@ -40,81 +37,119 @@ public class UserServiceImpl implements UserService{
 			if (pswrd.matches(passwordpattern)) {
 				User existingUser = userRepository.findByEmail(user.getEmail());
 				if (existingUser != null) {
-					throw new UserAlreadyExistsException(userAlreadyExistsMessage);
+					throw new AlreadyExistsException(UserConstants.userAlreadyExists);
 				}
 				Role role = user.getRole();
 				Role existingRole = userRepository.findRole(user.getRole().getRolename());
 				if (existingRole.getRolename().equals(role.getRolename())) {
 					user.setRole(existingRole);
-				}	
+				}
 				userRepository.save(user);
-			}else {
-				throw new ValidationException(passwordValidation);
+			} else {
+				throw new ValidationException(UserConstants.passwordValidation);
 			}
 		} else {
-			throw new ValidationException(emailValidation);
+			throw new ValidationException(UserConstants.emailValidation);
 		}
 		return user;
 	}
-	
+
+	@Override
 	public List<User> getAllUsers() {
 		return userRepository.findAll();
 	}
-	
+
 	@Override
-	public void deleteUser(int user_id)  {
-		Optional<User> existingUser= userRepository.findById(user_id);
-		if(!existingUser.isPresent()) {
-			throw new UserNotFoundException(userNotFoundMessage);
+	public void deleteUser(int user_id) {
+		Optional<User> existingUser = userRepository.findById(user_id);
+		if (!existingUser.isPresent()) {
+			throw new NotFoundException(UserConstants.userNotExists);
 		} else {
 			userRepository.deleteById(user_id);
-		}	
+		}
 	}
 
 	@Override
-	public User loginUser(String email, String password) {
+	public User loginUser(User user) {
+		String email = user.getEmail();
+		String password = user.getPassword();
 		return userRepository.findByEmailAndPassword(email, password);
-		
 	}
 
 	@Override
 	public User getUserById(int user_id) {
-		User user= userRepository.findUser(user_id);
-		if(user!=null) {
-			return user;
+		Optional<User> user = userRepository.findByUserId(user_id);
+		if (user.isPresent()) {
+			return user.get();
+		} else {
+			throw new NotFoundException(UserConstants.userNotExists);
 		}
-		else {
-			throw new UserNotFoundException(userNotFoundMessage);
-		}
-		
+
 	}
 
 	@Override
 	public User getUserByEmail(String email) {
-		User user= userRepository.findByEmail(email);
-		if(user!=null) {
+		User user = userRepository.findByEmail(email);
+		if (user != null) {
 			return user;
-		}
-		else {
-			throw new UserNotFoundException(userNotFoundMessage);
+		} else {
+			throw new NotFoundException(UserConstants.userNotExists);
 		}
 	}
 
 	@Override
-	public User updateUser(User user) throws UserNotFoundException {
-		User existingUser=userRepository.findUser(user.getUser_id());
-		if(existingUser!=null) {
+	public User updateUser(User user) {
+		Optional<User> existingUser = userRepository.findByUserId(user.getUser_id());
+		if (existingUser != null) {
 			Role role = user.getRole();
 			Role existingRole = userRepository.findRole(user.getRole().getRolename());
 			if (existingRole.getRolename().equals(role.getRolename())) {
 				user.setRole(existingRole);
-			}	
+			}
 			return userRepository.save(user);
+		} else {
+			throw new NotFoundException(UserConstants.userNotExists);
 		}
-		else {
-			throw new UserNotFoundException(userNotFoundMessage);
-		}
-		
+
 	}
-		
+
+	@Override
+	@Transactional
+	public List<Content> retrieveContent(int user_id) {
+		Optional<User> optionalUser = userRepository.findById(user_id);
+		if (!optionalUser.isPresent()) {
+			throw new NotFoundException(UserConstants.userNotExists);
+		}
+//			else {
+//			for(Content content:contents) {
+//				
+//			}
+		return optionalUser.get().getContents();
+	}
+
+	@Override
+	@Transactional
+	public List<Comment> retrieveComment(int user_id) {
+		Optional<User> optionalUser = userRepository.findByUserId(user_id);
+		List<Content> contents = optionalUser.get().getContents();
+		if (!optionalUser.isPresent()) {
+			throw new NotFoundException(UserConstants.userNotExists);
+		} else {
+			for (Content content : contents) {
+				return content.getComment();
+			}
+		}
+		return null;
+	}
+
+	@Override
+	@Transactional
+	public List<Followers> retrieveFollowers(int user_id) {
+		Optional<User> optionalUser = userRepository.findById(user_id);
+		if (!optionalUser.isPresent()) {
+			throw new NotFoundException(UserConstants.userNotExists);
+		} else {
+			return optionalUser.get().getFollowers();
+		}
+	}
 }

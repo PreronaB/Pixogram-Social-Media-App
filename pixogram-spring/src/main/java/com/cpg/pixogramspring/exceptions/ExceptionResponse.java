@@ -4,18 +4,26 @@ import java.util.Date;
 
 public class ExceptionResponse {
 	
+	private int statusCode;
 	private Date timeStamp;
 	private String message;
 	private String details;
 	
-	public ExceptionResponse(Date timeStamp, String message, String details) {
+	public ExceptionResponse(int statusCode, Date timeStamp, String message, String details) {
 		super();
+		this.statusCode=statusCode;
 		this.timeStamp = timeStamp;
 		this.message = message;
 		this.details = details;
 	}
 	
 	
+	public int getStatusCode() {
+		return statusCode;
+	}
+	public void setStatusCode(int statusCode) {
+		this.statusCode = statusCode;
+	}
 	public Date getTimeStamp() {
 		return timeStamp;
 	}

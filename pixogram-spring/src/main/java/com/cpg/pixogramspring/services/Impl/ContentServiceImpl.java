@@ -7,65 +7,54 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.cpg.pixogramspring.entities.Comment;
-import com.cpg.pixogramspring.entities.Content;
-import com.cpg.pixogramspring.entities.User;
-import com.cpg.pixogramspring.exceptions.ContentNotFoundException;
-import com.cpg.pixogramspring.exceptions.UserNotFoundException;
+import com.cpg.pixogramspring.constants.UserConstants;
+import com.cpg.pixogramspring.exceptions.NotFoundException;
+import com.cpg.pixogramspring.models.Comment;
+import com.cpg.pixogramspring.models.Content;
+import com.cpg.pixogramspring.models.User;
 import com.cpg.pixogramspring.repositories.ContentRepository;
 import com.cpg.pixogramspring.repositories.UserRepository;
 import com.cpg.pixogramspring.services.ContentService;
 
 @Service
 public class ContentServiceImpl implements ContentService {
-	
-	@Value("User not found!!")
-	private String userNotFoundMessage;
-	@Value("Content not found!!")
-	private String contentNotFoundMessage;
+
 	@Autowired
 	private ContentRepository contentRepository;
 	@Autowired
 	private UserRepository userRepository;
-	
+
 	@Override
-	public Content uploadFile(MultipartFile file, String caption, int user_id) throws UserNotFoundException,IllegalStateException, IOException {
-		long append= System.nanoTime();
-		String filen=file.getOriginalFilename();
-		String filename= append + "_" + filen;
-		String filetype=file.getContentType();
-		User existingUser=userRepository.findUser(user_id);
-		file.transferTo(new File("E:\\Sprint\\uploads\\"+file.getOriginalFilename()));
-		//Content existingContent = contentRepository.findByCaption(caption);
-		try {
-		Content content=new Content(caption,filename,filetype);
-		if(existingUser==null) {
-			throw new UserNotFoundException(userNotFoundMessage);
+	public Content uploadFile(MultipartFile file, String caption, int user_id)
+			throws IllegalStateException, IOException {
+		long append = System.nanoTime();
+		String filename = append + "_" + file.getOriginalFilename();
+		String filetype = file.getContentType();
+		Optional<User> existingUser = userRepository.findByUserId(user_id);
+		file.transferTo(new File("F:\\Sprint\\uploads\\" + file.getOriginalFilename()));
+		// file.transferTo(new File("E:\\softwares\\new
+		// eclipse\\eclipse\\pixogram-spring\\src\\main\\resources\\static\\uploads\\" +
+		// file.getOriginalFilename()));
+		// Content existingContent = contentRepository.findByCaption(caption);
+		Content content = new Content(caption, filename, filetype);
+		if (existingUser.isPresent()) {
+			content.setUser(existingUser.get());
+			return contentRepository.save(content);
+		} else {
+			throw new NotFoundException(UserConstants.userNotExists);
 		}
-		if((user_id)==(existingUser.getUser_id())){
-			content.setUser(existingUser);
-		}
-		return contentRepository.save(content);
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-		}
-		return null;
 	}
-	
+
 	@Override
-	public Content findContent(int content_id) throws ContentNotFoundException {
+	public Content findContent(int content_id) {
 		Optional<Content> content = contentRepository.findById(content_id);
 		if (content.isPresent()) {
-			Content foundContent = content.get();
-			return foundContent;
-	}
-		else {
-			throw new ContentNotFoundException(contentNotFoundMessage);
+			return content.get();
+		} else {
+			throw new NotFoundException(UserConstants.contentNotExists);
 		}
 	}
 
@@ -75,67 +64,50 @@ public class ContentServiceImpl implements ContentService {
 	}
 
 	@Override
-	public void deleteContent(int content_id) throws ContentNotFoundException {
+	public void deleteContent(int content_id) {
 		Optional<Content> content = contentRepository.findById(content_id);
-		if(!content.isPresent()) {
-			throw new ContentNotFoundException(contentNotFoundMessage);
-		}
-		else {
+		if (!content.isPresent()) {
+			throw new NotFoundException(UserConstants.contentNotExists);
+		} else {
 			contentRepository.deleteById(content_id);
 		}
 	}
-	
-////	public Content updateContent(Content content) throws ContentNotFoundException {
-////		Content existingContent= contentRepository.findContentById(content.getContent_id());
-////		if(existingContent!=null) {
-////			return contentRepository.save(content);
-////		}
-////		else {
-////			throw new ContentNotFoundException(contentNotFoundMessage);
-////		}
-//		
-//	}
-	
+
 	@Override
-	public Content addComment(int user_id,int content_id,String comment) {
-		User existingUser=userRepository.findUser(user_id);
-		 String email=existingUser.getEmail();
-		Content existingContent=contentRepository.findContentById(content_id);
-		Comment message=new Comment(comment,email);
-		List<Comment> comments=new ArrayList<>();
-		if((existingContent!=null)) {
-			comments= existingContent.getComment();
+	public Content addComment(int user_id, int content_id, String comment) {
+		Optional<User> existingUser = userRepository.findByUserId(user_id);
+		String email = existingUser.get().getEmail();
+		Content existingContent = contentRepository.findContentById(content_id);
+		Comment message = new Comment(comment, email);
+		List<Comment> comments = new ArrayList<>();
+		if ((existingContent != null)) {
+			comments = existingContent.getComment();
 			comments.add(message);
 			existingContent.setComment(comments);
 		}
 		return contentRepository.save(existingContent);
 	}
-	
+
 	@Override
-	public Content addLikes(int content_id) throws ContentNotFoundException {
-		Content existingContent=contentRepository.findContentById(content_id);
-		int like=existingContent.getLike();
-		// contentRepository.countLikes();
-		if(existingContent!=null) {
-			like+=1;
+	public Content addLikes(int content_id) {
+		Content existingContent = contentRepository.findContentById(content_id);
+		int like = existingContent.getLike();
+		if (existingContent != null) {
+			++like;
 			existingContent.setLike(like);
-		}	
+		}
 		return contentRepository.save(existingContent);
-//		else {
-//			throw new ContentNotFoundException("Content Not Found");
-//		}
 	}
-	
+
 	@Override
-	public Content addDislikes(int content_id) throws ContentNotFoundException {
-		Content existingContent=contentRepository.findContentById(content_id);
-		int dislike= existingContent.getDislike();
-		if(existingContent!=null) {
-			dislike+=1;
+	public Content addDislikes(int content_id) {
+		Content existingContent = contentRepository.findContentById(content_id);
+		int dislike = existingContent.getDislike();
+		if (existingContent != null) {
+			++dislike;
 			existingContent.setDislike(dislike);
 		}
 		return contentRepository.save(existingContent);
 	}
 
-	
 }
