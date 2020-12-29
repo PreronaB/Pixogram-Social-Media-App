@@ -26,6 +26,9 @@ public class UserServiceImpl implements UserService {
 	@Autowired
 	private UserRepository userRepository;
 
+	/**
+	 * Adding a user
+	 */
 	@Override
 	public User addUser(User user) throws ValidationException {
 		final String passwordpattern = "^(?=.*[0-9])" + "(?=.*[a-z])(?=.*[A-Z])" + "(?=.*[@#$%^&+=])"
@@ -54,11 +57,17 @@ public class UserServiceImpl implements UserService {
 		return user;
 	}
 
+	/**
+	 * Getting all users
+	 */
 	@Override
 	public List<User> getAllUsers() {
 		return userRepository.findAll();
 	}
 
+	/**
+	 * Deleting a user
+	 */
 	@Override
 	public void deleteUser(int user_id) {
 		Optional<User> existingUser = userRepository.findById(user_id);
@@ -69,6 +78,9 @@ public class UserServiceImpl implements UserService {
 		}
 	}
 
+	/**
+	 * Signing in as a user
+	 */
 	@Override
 	public User loginUser(User user) {
 		String email = user.getEmail();
@@ -87,6 +99,9 @@ public class UserServiceImpl implements UserService {
 
 	}
 
+	/**
+	 * Finding user by email
+	 */
 	@Override
 	public User getUserByEmail(String email) {
 		User user = userRepository.findByEmail(email);
@@ -97,6 +112,9 @@ public class UserServiceImpl implements UserService {
 		}
 	}
 
+	/**
+	 * Making changes as a user in your details
+	 */
 	@Override
 	public User updateUser(User user) {
 		Optional<User> existingUser = userRepository.findByUserId(user.getUser_id());
@@ -113,6 +131,9 @@ public class UserServiceImpl implements UserService {
 
 	}
 
+	/**
+	 * Finding all the contents specific to a user
+	 */
 	@Override
 	@Transactional
 	public List<Content> retrieveContent(int user_id) {
@@ -120,13 +141,12 @@ public class UserServiceImpl implements UserService {
 		if (!optionalUser.isPresent()) {
 			throw new NotFoundException(UserConstants.userNotExists);
 		}
-//			else {
-//			for(Content content:contents) {
-//				
-//			}
 		return optionalUser.get().getContents();
 	}
 
+	/**
+	 * Finding all the comments specific to a user
+	 */
 	@Override
 	@Transactional
 	public List<Comment> retrieveComment(int user_id) {
@@ -142,6 +162,9 @@ public class UserServiceImpl implements UserService {
 		return null;
 	}
 
+	/**
+	 * Finding all the followers specific to a user
+	 */
 	@Override
 	@Transactional
 	public List<Followers> retrieveFollowers(int user_id) {

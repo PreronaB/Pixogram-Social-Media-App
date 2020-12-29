@@ -19,8 +19,8 @@ public interface ContentService {
 
 	Content addComment(int user_id, int content_id, String comment);
 
-	Content addLikes(int content_id);
+	Content addLikes(int content_id, int user_id);
 
-	Content addDislikes(int content_id);
+	Content addDislikes(int content_id, int user_id);
 
 }

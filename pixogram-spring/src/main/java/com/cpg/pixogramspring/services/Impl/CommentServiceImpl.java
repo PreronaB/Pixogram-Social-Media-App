@@ -12,29 +12,34 @@ import com.cpg.pixogramspring.repositories.CommentRepository;
 import com.cpg.pixogramspring.services.CommentService;
 
 @Service
-public class CommentServiceImpl implements CommentService{
-	
+public class CommentServiceImpl implements CommentService {
+
 	@Autowired
 	CommentRepository commentRepository;
-	
+
+	/**
+	 * Deleting a particular comment
+	 */
 	@Override
-	public void deleteComment(int comment_id){
-		Optional<Comment> comment=commentRepository.findById(comment_id);
-		if(!comment.isPresent()) {
+	public void deleteComment(int comment_id) {
+		Optional<Comment> comment = commentRepository.findById(comment_id);
+		if (!comment.isPresent()) {
 			throw new NotFoundException(UserConstants.commentNotExists);
 		}
 		commentRepository.deleteById(comment_id);
 	}
 
+	/**
+	 * Finding a particular comment
+	 */
 	@Override
-	public Comment getComment(int comment_id){
-		Optional<Comment> comment=commentRepository.findById(comment_id);
-		if(comment.isPresent()) {
+	public Comment getComment(int comment_id) {
+		Optional<Comment> comment = commentRepository.findById(comment_id);
+		if (comment.isPresent()) {
 			return comment.get();
-		}
-		else {
+		} else {
 			throw new NotFoundException(UserConstants.commentNotExists);
-		}	
+		}
 	}
 
 }

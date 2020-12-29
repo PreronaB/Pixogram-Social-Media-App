@@ -2,6 +2,10 @@ package com.cpg.pixogramspring.exceptions;
 
 import java.util.Date;
 
+/**
+ * If the exception is thrown, then what we want to get in response 
+ *
+ */
 public class ExceptionResponse {
 	
 	private int statusCode;

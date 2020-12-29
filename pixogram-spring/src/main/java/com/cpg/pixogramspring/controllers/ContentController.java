@@ -31,38 +31,52 @@ import io.swagger.annotations.ApiParam;
 @RequestMapping("/api")
 @Api(value = "Content", tags = { "ContentAPI" })
 public class ContentController {
-	
+
 	@Autowired
 	private UserService userService;
 	@Autowired
 	private ContentService contentService;
 	@Autowired
 	private CommentService commentService;
-	
-	
+
+	/**
+	 * This method is only for user For adding images/videos in user's account
+	 * 
+	 * @param file
+	 * @param caption
+	 * @param user_id
+	 * @return Response status
+	 * @throws IllegalStateException
+	 * @throws IOException
+	 */
 	@PostMapping("/upload")
 	@ApiOperation(value = "Uploading a file", notes = "Add the file and provide a caption", response = Content.class)
 	public ResponseEntity<String> uploadFile(
 			@ApiParam(value = "Select a file you want to upload", required = true) @RequestParam("file") MultipartFile file,
 			@ApiParam(value = "Caption for file you are uploading", required = true) @RequestParam("caption") String caption,
-			@ApiParam(value = "ID value for the user you want to upload for", required = true) @RequestParam("user_id") int user_id) 
-					throws IllegalStateException, IOException{
-			User existingUser=userService.getUserById(user_id);
-		if (existingUser == null) {
-			return new ResponseEntity<String>(UserConstants.userNotExists, HttpStatus.NOT_FOUND);
+			@ApiParam(value = "ID value for the user you want to upload for", required = true) @RequestParam("user_id") int user_id)
+			throws IllegalStateException, IOException {
+		Content content = contentService.uploadFile(file, caption, user_id);
+		if (content != null) {
+			return new ResponseEntity<>(UserConstants.added, HttpStatus.CREATED);
+		} else {
+			return new ResponseEntity<>(UserConstants.contentNotExists, HttpStatus.NOT_FOUND);
 		}
-		contentService.uploadFile(file, caption, user_id);
-		ResponseEntity<String> re = new ResponseEntity<>(UserConstants.added, HttpStatus.CREATED);
-		return re;
 	}
 
+	/**
+	 * This method is only for user Searching a particular image/video you uploaded
+	 * 
+	 * @param content_id
+	 * @return Content
+	 */
 	@GetMapping("/upload/{content_id}")
 	@ApiOperation(value = "Find a file by Id", notes = "Provide an id to find file", response = Content.class)
 	public ResponseEntity<Content> findContent(
-			@ApiParam(value = "ID value for the content you want to retrieve", required = true) @PathVariable("content_id") int content_id){
+			@ApiParam(value = "ID value for the content you want to retrieve", required = true) @PathVariable("content_id") int content_id) {
 		ResponseEntity<Content> response = null;
-		Content content=contentService.findContent(content_id);
-		if (content!=null) {
+		Content content = contentService.findContent(content_id);
+		if (content != null) {
 			response = new ResponseEntity<>(content, HttpStatus.OK);
 		} else {
 			response = new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -70,62 +84,88 @@ public class ContentController {
 		return response;
 	}
 
+	/**
+	 * This method is only for admin To find all the contents
+	 * 
+	 * @return contents
+	 */
 	@GetMapping("/uploadsall")
 	@ApiOperation(value = "View whole content", response = Content.class)
 	public ResponseEntity<List<Content>> allContent() {
-		List<Content> contents= contentService.allContent();
-		if(!contents.isEmpty()) {
+		List<Content> contents = contentService.allContent();
+		if (!contents.isEmpty()) {
 			return new ResponseEntity<>(contents, HttpStatus.OK);
-		}
-		else {
+		} else {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 	}
 
+	/**
+	 * This method is only for user To delete a particular image/video from your
+	 * account
+	 * 
+	 * @param content_id
+	 * @return Response Status
+	 */
 	@DeleteMapping("/uploaddel/{content_id}")
 	@ApiOperation(value = "Deleting a file", notes = "Provide an id to delete file", response = Content.class)
 	public ResponseEntity<String> deleteContent(
-			@ApiParam(value = "ID value for the content you want to delete", required = true) @PathVariable("content_id") int content_id){
-			contentService.deleteContent(content_id);
-			return new ResponseEntity<String>(UserConstants.deleted, HttpStatus.CREATED);
+			@ApiParam(value = "ID value for the content you want to delete", required = true) @PathVariable("content_id") int content_id) {
+		contentService.deleteContent(content_id);
+		return new ResponseEntity<String>(UserConstants.deleted, HttpStatus.CREATED);
 	}
-
 
 //....................................................................................................................//
 //.........................................USER METHODS ON CONTENTS...................................................//
 
+	/**
+	 * This method is only for user adding comments to the contents uploaded
+	 * 
+	 * @param content_id
+	 * @param user_id
+	 * @param comment
+	 * @return Response Status
+	 */
 	@PostMapping("/comment")
 	@ApiOperation(value = "Adding Comment", notes = "Commenting on images and videos", response = Content.class)
 	public ResponseEntity<String> addComment(
 			@ApiParam(value = "ID value for the content you want to add comment", required = true) @RequestParam("content_id") int content_id,
 			@ApiParam(value = "ID value for the user you want to add comment", required = true) @RequestParam("user_id") int user_id,
-			@ApiParam(value = "String value the comment you want to add", required = true) @RequestParam("comment") String comment){
-		Content existingContent = contentService.findContent(content_id);
-		if (existingContent != null) {
-			User existingUser=userService.getUserById(user_id);
-			if (existingUser != null) {
-				contentService.addComment(user_id, content_id, comment);
-				return new ResponseEntity<>(UserConstants.added, HttpStatus.CREATED);
-			}
-			return new ResponseEntity<>(UserConstants.userNotExists, HttpStatus.NOT_FOUND);
+			@ApiParam(value = "String value the comment you want to add", required = true) @RequestParam("comment") String comment) {
+		Content content = contentService.addComment(user_id, content_id, comment);
+		if (content != null) {
+			return new ResponseEntity<>(UserConstants.added, HttpStatus.CREATED);
+		} else {
+			return new ResponseEntity<>(UserConstants.cannotupdate, HttpStatus.NOT_FOUND);
 		}
-		return new ResponseEntity<>(UserConstants.contentNotExists, HttpStatus.NOT_FOUND);
 	}
 
+	/**
+	 * This method is only for user Finding a particular comment
+	 * 
+	 * @param comment_id
+	 * @return Response Status
+	 */
 	@DeleteMapping("/commentdel/{comment_id}")
 	@ApiOperation(value = "Deleting a file", notes = "Provide an id to delete file", response = Comment.class)
 	public ResponseEntity<String> deleteComment(
 			@ApiParam(value = "ID value for the comment you want to delete", required = true) @PathVariable("comment_id") int comment_id) {
-			commentService.deleteComment(comment_id);
-			return new ResponseEntity<String>(UserConstants.deleted, HttpStatus.CREATED);
+		commentService.deleteComment(comment_id);
+		return new ResponseEntity<String>(UserConstants.deleted, HttpStatus.CREATED);
 	}
-	
+
+	/**
+	 * This method is only for user Finding a particular comment
+	 * 
+	 * @param comment_id
+	 * @return Comment
+	 */
 	@GetMapping("/comment/{comment_id}")
 	@ApiOperation(value = "Finding comment by id", notes = "Provide an id to find comment", response = User.class)
 	public ResponseEntity<Comment> findCommentById(
-			@ApiParam(value = "ID value for the comment you want to retrieve", required = true) @PathVariable("comment_id") int comment_id){
+			@ApiParam(value = "ID value for the comment you want to retrieve", required = true) @PathVariable("comment_id") int comment_id) {
 		ResponseEntity<Comment> response = null;
-		Comment existingComment=commentService.getComment(comment_id);
+		Comment existingComment = commentService.getComment(comment_id);
 		if (existingComment != null) {
 			response = new ResponseEntity<>(existingComment, HttpStatus.OK);
 		} else {
@@ -134,54 +174,82 @@ public class ContentController {
 		return response;
 	}
 
+	/**
+	 * This method is only for user For adding likes to images/videos uploaded
+	 * 
+	 * @param user_id
+	 * @param content_id
+	 * @return Response status
+	 */
 	@PostMapping("/like")
 	@ApiOperation(value = "Adding Likes", notes = "Liking the images and videos", response = Content.class)
 	public ResponseEntity<String> addLike(
 			@ApiParam(value = "ID value for the user you want to delete", required = true) @RequestParam("user_id") int user_id,
 			@ApiParam(value = "ID value for the content you want to delete", required = true) @RequestParam("content_id") int content_id) {
-		Content existingContent = contentService.findContent(content_id);
-		User existingUser=userService.getUserById(user_id);
-		if (existingContent != null) {
-			if (existingUser != null) {
-				contentService.addLikes(content_id);
-				return new ResponseEntity<>(UserConstants.added, HttpStatus.CREATED);
-			}
-			return new ResponseEntity<>(UserConstants.userNotExists, HttpStatus.NOT_FOUND);
+		Content content = contentService.addLikes(content_id, user_id);
+		if (content != null) {
+			return new ResponseEntity<>(UserConstants.added, HttpStatus.CREATED);
+		} else {
+			return new ResponseEntity<>(UserConstants.cannotupdate, HttpStatus.NOT_FOUND);
 		}
-		return new ResponseEntity<>(UserConstants.contentNotExists, HttpStatus.NOT_FOUND);
 	}
 
+	/**
+	 * This method is only for user For adding dislikes to images/videos uploaded
+	 * 
+	 * @param user_id
+	 * @param content_id
+	 * @return Response status
+	 */
 	@PostMapping("/dislike")
 	@ApiOperation(value = "Adding Dislikes", notes = "Disliking the images and videos", response = Content.class)
 	public ResponseEntity<String> addDislike(
 			@ApiParam(value = "ID value for the user you want to delete", required = true) @RequestParam("user_id") int user_id,
-			@ApiParam(value = "ID value for the user you want to delete", required = true) @RequestParam("content_id") int content_id){
-		Content existingContent = contentService.findContent(content_id);
-		User existingUser=userService.getUserById(user_id);
-		if (existingContent != null) {
-			if (existingUser != null) {
-				contentService.addDislikes(content_id);
-				return new ResponseEntity<>(UserConstants.added, HttpStatus.CREATED);
-			}
-			return new ResponseEntity<>(UserConstants.userNotExists, HttpStatus.NOT_FOUND);
+			@ApiParam(value = "ID value for the user you want to delete", required = true) @RequestParam("content_id") int content_id) {
+		Content content = contentService.addDislikes(content_id, user_id);
+		if (content != null) {
+			return new ResponseEntity<>(UserConstants.added, HttpStatus.CREATED);
+		} else {
+			return new ResponseEntity<>(UserConstants.cannotupdate, HttpStatus.NOT_FOUND);
 		}
-		return new ResponseEntity<>(UserConstants.contentNotExists, HttpStatus.NOT_FOUND);
 	}
-	
+
+	/**
+	 * This method is for user and admin To get track of contents for a specific
+	 * user
+	 * 
+	 * @param user_id
+	 * @return List of Content
+	 */
 	@GetMapping("/trackcontents")
 	@ApiOperation(value = "User Content", notes = "Get a specific user's content", response = Content.class)
 	public ResponseEntity<List<Content>> trackContent(
 			@ApiParam(value = "ID value of user", required = true) @RequestParam("user_id") int user_id) {
-		List<Content> contents=userService.retrieveContent(user_id);
-		if(!contents.isEmpty()) {
+		List<Content> contents = userService.retrieveContent(user_id);
+		if (!contents.isEmpty()) {
 			return new ResponseEntity<>(contents, HttpStatus.CREATED);
-		}
-		else {
+		} else {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
-		
 	}
-	
-	
-	
+
+	/**
+	 * This method is for user and admin both To find all the comments of particular
+	 * user
+	 * 
+	 * @param user_id
+	 * @return List of Comments
+	 */
+	@GetMapping("/trackcomments")
+	@ApiOperation(value = "Content Comments", notes = "Get a specific user's comments on content", response = Comment.class)
+	public ResponseEntity<List<Comment>> getComments(
+			@ApiParam(value = "ID value of the user you want to track", required = true) @RequestParam("user_id") int user_id) {
+		List<Comment> comments = userService.retrieveComment(user_id);
+		if (!comments.isEmpty()) {
+			return new ResponseEntity<>(comments, HttpStatus.CREATED);
+		} else {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+	}
+
 }

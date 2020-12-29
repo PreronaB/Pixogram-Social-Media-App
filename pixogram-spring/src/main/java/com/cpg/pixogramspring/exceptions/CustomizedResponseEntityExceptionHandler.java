@@ -17,9 +17,9 @@ public class CustomizedResponseEntityExceptionHandler extends ResponseEntityExce
 	@ExceptionHandler(AlreadyExistsException.class)
 	public final ResponseEntity<Object> handleAlreadyExistsException(AlreadyExistsException ex, WebRequest request) {
 	
-	 ExceptionResponse exceptionResponse  = new ExceptionResponse(HttpStatus.UNPROCESSABLE_ENTITY.value(), new Date(), ex.getMessage(), request.getDescription(false));
+	 ExceptionResponse exceptionResponse  = new ExceptionResponse(HttpStatus.CONFLICT.value(), new Date(), ex.getMessage(), request.getDescription(false));
 	 
-	 return new ResponseEntity(exceptionResponse, HttpStatus.UNPROCESSABLE_ENTITY);
+	 return new ResponseEntity<>(exceptionResponse, HttpStatus.CONFLICT);
 	
     }
 	
@@ -28,7 +28,7 @@ public class CustomizedResponseEntityExceptionHandler extends ResponseEntityExce
 	
 	 ExceptionResponse exceptionResponse  = new ExceptionResponse(HttpStatus.NOT_FOUND.value(), new Date(), ex.getMessage(), request.getDescription(false));
 	 
-	 return new ResponseEntity(exceptionResponse, HttpStatus.NOT_FOUND);
+	 return new ResponseEntity<>(exceptionResponse, HttpStatus.NOT_FOUND);
 	
     }
 	
@@ -37,7 +37,7 @@ public class CustomizedResponseEntityExceptionHandler extends ResponseEntityExce
 	
 	 ExceptionResponse exceptionResponse  = new ExceptionResponse(HttpStatus.UNPROCESSABLE_ENTITY.value(), new Date(), ex.getMessage(), request.getDescription(false));
 	 
-	 return new ResponseEntity(exceptionResponse, HttpStatus.UNPROCESSABLE_ENTITY);
+	 return new ResponseEntity<>(exceptionResponse, HttpStatus.UNPROCESSABLE_ENTITY);
 	
     }
 	
@@ -46,7 +46,7 @@ public class CustomizedResponseEntityExceptionHandler extends ResponseEntityExce
 	
 	 ExceptionResponse exceptionResponse  = new ExceptionResponse(HttpStatus.NOT_FOUND.value(),new Date(), ex.getMessage(), request.getDescription(false));
 	 
-	 return new ResponseEntity(exceptionResponse, HttpStatus.NOT_FOUND);
+	 return new ResponseEntity<>(exceptionResponse, HttpStatus.NOT_FOUND);
 	
     }
 

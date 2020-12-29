@@ -19,8 +19,10 @@ public class Role {
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@ApiModelProperty(notes = "The unique Id of role")
 	int role_id;
+
 	@ApiModelProperty(notes = "The rolename for user")
 	String rolename;
+
 	@OneToMany(mappedBy = "role", cascade = CascadeType.ALL)
 	private List<User> user;
 

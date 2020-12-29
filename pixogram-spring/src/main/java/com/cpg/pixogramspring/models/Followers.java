@@ -15,36 +15,49 @@ import io.swagger.annotations.ApiModelProperty;
 
 @ApiModel(description = "Follower's user have")
 @Entity
-public class Followers{
+public class Followers {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@ApiModelProperty(notes = "The Id value of follower")
 	private int follower_id;
+
 	@ApiModelProperty(notes = "The Email Id of follower")
 	private String follower__email;
+
 	@ApiModelProperty(notes = "The email Id of user u want to follow")
 	private String user_email;
+
 	@JsonIgnore
-	@ManyToOne(cascade = {CascadeType.PERSIST,CascadeType.MERGE,CascadeType.REFRESH})
-	@JoinColumn(name="user_id", referencedColumnName="user_id")
+	@ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH })
+	@JoinColumn(name = "user_id", referencedColumnName = "user_id")
 	@ApiModelProperty(notes = "Details about user")
 	private User user;
 
 	public Followers() {
-		
+
 	}
-	
+
+	public Followers(int follower_id, String follower__email, String user_email) {
+		super();
+		this.follower_id = follower_id;
+		this.follower__email = follower__email;
+		this.user_email = user_email;
+	}
+
 	public Followers(String follower__email, String user_email) {
 		super();
 		this.follower__email = follower__email;
 		this.user_email = user_email;
 	}
+
 	public int getFollower_id() {
 		return follower_id;
 	}
+
 	public void setFollower_id(int follower_id) {
 		this.follower_id = follower_id;
 	}
+
 	public String getFollower__email() {
 		return follower__email;
 	}

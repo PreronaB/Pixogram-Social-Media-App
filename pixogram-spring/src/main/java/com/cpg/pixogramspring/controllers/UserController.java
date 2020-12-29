@@ -16,8 +16,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.cpg.pixogramspring.constants.UserConstants;
-import com.cpg.pixogramspring.exceptions.NotAUserException;
-import com.cpg.pixogramspring.models.Comment;
 import com.cpg.pixogramspring.models.Content;
 import com.cpg.pixogramspring.models.Followers;
 import com.cpg.pixogramspring.models.User;
@@ -38,9 +36,12 @@ public class UserController {
 	@Autowired
 	private UserService userService;
 
-//..........................................................................................................................//
-//...........................................ADMIN AND USER METHOD..........................................................//
-
+	/**
+	 * This method can be used by both admin and user Signing in as a user
+	 * 
+	 * @param user
+	 * @return Response Status
+	 */
 	@GetMapping("/login")
 	@ApiOperation(value = "User Login", notes = "Enter your Email and Password", response = User.class)
 	public ResponseEntity<String> loginUser(@RequestBody User user) {
@@ -51,9 +52,12 @@ public class UserController {
 			return new ResponseEntity<>("Unsuccessful!! Wrong Email or Password", HttpStatus.NOT_FOUND);
 	}
 
-//...................................................................................................................//
-//...........................................ADMIN METHODS...........................................................//
-
+	/**
+	 * This method is only for admin Finding a particular user by userId
+	 * 
+	 * @param user_id
+	 * @return user
+	 */
 	@GetMapping("/users/{user_id}")
 	@ApiOperation(value = "Finding user by id", notes = "Provide an id to find user", response = User.class)
 	public ResponseEntity<User> findUserById(
@@ -68,6 +72,12 @@ public class UserController {
 		return response;
 	}
 
+	/**
+	 * This method is only for admin Finding a particular user by email
+	 * 
+	 * @param email
+	 * @return user
+	 */
 	@GetMapping("/users")
 	@ApiOperation(value = "Finding user by email", notes = "Provide an email to find user", response = User.class)
 	public ResponseEntity<User> findUserByEmail(
@@ -79,6 +89,11 @@ public class UserController {
 		return new ResponseEntity<>(existingUser, HttpStatus.OK);
 	}
 
+	/**
+	 * This method is only for admin To see All users
+	 * 
+	 * @return user
+	 */
 	@GetMapping("/userall")
 	@ApiOperation(value = "All users", response = User.class)
 	public ResponseEntity<List<User>> findAllUsers() {
@@ -90,6 +105,12 @@ public class UserController {
 		}
 	}
 
+	/**
+	 * This method is for admin and user both Adding a user by specifying its role
+	 * 
+	 * @param user
+	 * @return Response Status
+	 */
 	@PostMapping("/useradd")
 	@ApiOperation(value = "Adding user", notes = "Provide all attributes to add user", response = User.class)
 	public ResponseEntity<String> saveUser(@RequestBody User user) {
@@ -101,6 +122,12 @@ public class UserController {
 		}
 	}
 
+	/**
+	 * This method is only for admin Deleting a user by userId
+	 * 
+	 * @param user_id
+	 * @return Response Status
+	 */
 	@DeleteMapping("/userdel/{user_id}")
 	@ApiOperation(value = "Deleting user", notes = "Provide id to delete user", response = User.class)
 	public ResponseEntity<String> deleteUser(
@@ -109,6 +136,13 @@ public class UserController {
 		return new ResponseEntity<>(UserConstants.deleted, HttpStatus.OK);
 	}
 
+	/**
+	 * This method is for user and admin both Updating user, to make some changes in
+	 * your personal account
+	 * 
+	 * @param user
+	 * @return Response Status
+	 */
 	@PutMapping("/userupd")
 	@ApiOperation(value = "Updating user", notes = "Change the attributes you want to user", response = User.class)
 	public ResponseEntity<String> updateUser(@RequestBody User user) {
@@ -123,41 +157,45 @@ public class UserController {
 //............................................USER METHODS............................................................//
 
 	/**
+	 * This method is only for user To follow a particular user
 	 * 
 	 * @param user_id
 	 * @param follower_email
 	 * @param email
-	 * @return
-	 * @throws NotAUserException
+	 * @return Followers
 	 */
 	@PostMapping("/follow")
 	@ApiOperation(value = "Following", notes = "Following users", response = Followers.class)
 	public ResponseEntity<Followers> follow(
 			@ApiParam(value = "ID value for the user you want to follow", required = true) @RequestParam("user_id") int user_id,
 			@ApiParam(value = "Email id of you", required = true) @RequestParam("follower_email") String follower_email,
-			@ApiParam(value = "Email id of user", required = true) @RequestParam("email") String email)
-			throws NotAUserException {
+			@ApiParam(value = "Email id of user", required = true) @RequestParam("email") String email) {
 		Followers follower = followerService.followUser(user_id, email, follower_email);
 		return new ResponseEntity<>(follower, HttpStatus.CREATED);
 	}
 
 	/**
-	 * Unfollow Method
+	 * This method is only for user To unfollow a particular user
 	 * 
 	 * @param user_id     userId
 	 * @param follower_id followerId
 	 * @return Response status
-	 * @throws NotAUserException
 	 */
 	@DeleteMapping("/unfollow")
 	@ApiOperation(value = "Un Following", notes = "Un Following users", response = Followers.class)
 	public ResponseEntity<String> unfollow(
 			@ApiParam(value = "ID value for the user you want to follow", required = true) @RequestParam("user_id") int user_id,
-			@ApiParam(value = "ID value of the follower", required = true) @RequestParam("follower_id") int follower_id){
-			followerService.unFollowUser(follower_id, user_id);
-			return new ResponseEntity<>(UserConstants.unfollowing, HttpStatus.CREATED);
+			@ApiParam(value = "ID value of the follower", required = true) @RequestParam("follower_id") int follower_id) {
+		followerService.unFollowUser(follower_id, user_id);
+		return new ResponseEntity<>(UserConstants.unfollowing, HttpStatus.CREATED);
 	}
 
+	/**
+	 * This method is only for users To get all the followers of a particular user
+	 * 
+	 * @param user_id
+	 * @return List of Followers
+	 */
 	@GetMapping("/trackfollowers")
 	@ApiOperation(value = "User Content", notes = "Get a specific user's followers", response = Content.class)
 	public ResponseEntity<List<Followers>> findFollowers(
@@ -170,15 +208,4 @@ public class UserController {
 		}
 	}
 
-	@GetMapping("/trackcomments")
-	@ApiOperation(value = "Content Comments", notes = "Get a specific user's comments on content", response = Comment.class)
-	public ResponseEntity<List<Comment>> getComments(
-			@ApiParam(value = "ID value of the user you want to track", required = true) @RequestParam("user_id") int user_id) {
-		List<Comment> comments = userService.retrieveComment(user_id);
-		if (!comments.isEmpty()) {
-			return new ResponseEntity<>(comments, HttpStatus.CREATED);
-		} else {
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		}
-	}
 }

@@ -21,22 +21,16 @@ public class PixogramSpringApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(PixogramSpringApplication.class, args);
 	}
-	
-	
+
 	@Bean
 	public Docket swaggerConfiguration() {
-		return new Docket(DocumentationType.SWAGGER_2)
-				.apiInfo(apiInfo())
-				.select()
-				.apis(RequestHandlerSelectors.basePackage("com.cpg"))
-				.paths(PathSelectors.ant("/api/**"))
+		return new Docket(DocumentationType.SWAGGER_2).apiInfo(apiInfo()).select()
+				.apis(RequestHandlerSelectors.basePackage("com.cpg")).paths(PathSelectors.ant("/api/**")).build();
+	}
+
+	private ApiInfo apiInfo() {
+		return new ApiInfoBuilder().title("PIXOGRAM APP API")
+				.description("This API can be used to upload images and videos and also to create your own profile")
 				.build();
 	}
-	private ApiInfo apiInfo(){
-		return new ApiInfoBuilder().title("PIXOGRAM APP API")
-		.description("This API can be used to upload images and videos and create your own profile")
-		.build();	
-	}
 }
-
-

@@ -27,6 +27,9 @@ public class ContentServiceImpl implements ContentService {
 	@Autowired
 	private UserRepository userRepository;
 
+	/**
+	 * Uploading images/videos to your account
+	 */
 	@Override
 	public Content uploadFile(MultipartFile file, String caption, int user_id)
 			throws IllegalStateException, IOException {
@@ -34,11 +37,11 @@ public class ContentServiceImpl implements ContentService {
 		String filename = append + "_" + file.getOriginalFilename();
 		String filetype = file.getContentType();
 		Optional<User> existingUser = userRepository.findByUserId(user_id);
-		file.transferTo(new File("F:\\Sprint\\uploads\\" + file.getOriginalFilename()));
-		// file.transferTo(new File("E:\\softwares\\new
-		// eclipse\\eclipse\\pixogram-spring\\src\\main\\resources\\static\\uploads\\" +
+		// file.transferTo(new File("E:\\Sprint\\uploads\\" +
 		// file.getOriginalFilename()));
-		// Content existingContent = contentRepository.findByCaption(caption);
+		file.transferTo(
+				new File("E:\\softwares\\neweclipse\\eclipse\\pixogram-spring\\src\\main\\resources\\static\\uploads\\"
+						+ file.getOriginalFilename()));
 		Content content = new Content(caption, filename, filetype);
 		if (existingUser.isPresent()) {
 			content.setUser(existingUser.get());
@@ -48,6 +51,9 @@ public class ContentServiceImpl implements ContentService {
 		}
 	}
 
+	/**
+	 * Finding a particular image/video
+	 */
 	@Override
 	public Content findContent(int content_id) {
 		Optional<Content> content = contentRepository.findById(content_id);
@@ -58,11 +64,17 @@ public class ContentServiceImpl implements ContentService {
 		}
 	}
 
+	/**
+	 * Getting all contents
+	 */
 	@Override
 	public List<Content> allContent() {
 		return contentRepository.findAll();
 	}
 
+	/**
+	 * Deleting a particular content
+	 */
 	@Override
 	public void deleteContent(int content_id) {
 		Optional<Content> content = contentRepository.findById(content_id);
@@ -73,6 +85,9 @@ public class ContentServiceImpl implements ContentService {
 		}
 	}
 
+	/**
+	 * Adding comments to uploaded content
+	 */
 	@Override
 	public Content addComment(int user_id, int content_id, String comment) {
 		Optional<User> existingUser = userRepository.findByUserId(user_id);
@@ -80,34 +95,54 @@ public class ContentServiceImpl implements ContentService {
 		Content existingContent = contentRepository.findContentById(content_id);
 		Comment message = new Comment(comment, email);
 		List<Comment> comments = new ArrayList<>();
-		if ((existingContent != null)) {
-			comments = existingContent.getComment();
-			comments.add(message);
-			existingContent.setComment(comments);
+		if (existingUser.isPresent()) {
+			if ((existingContent != null)) {
+				comments = existingContent.getComment();
+				comments.add(message);
+				existingContent.setComment(comments);
+				return contentRepository.save(existingContent);
+			}
+			throw new NotFoundException(UserConstants.contentNotExists);
 		}
-		return contentRepository.save(existingContent);
+		throw new NotFoundException(UserConstants.userNotExists);
 	}
 
+	/**
+	 * Adding likes to uploaded content
+	 */
 	@Override
-	public Content addLikes(int content_id) {
+	public Content addLikes(int content_id, int user_id) {
 		Content existingContent = contentRepository.findContentById(content_id);
+		Optional<User> existingUser = userRepository.findById(user_id);
 		int like = existingContent.getLike();
-		if (existingContent != null) {
-			++like;
-			existingContent.setLike(like);
+		if (existingUser.isPresent()) {
+			if (existingContent != null) {
+				++like;
+				existingContent.setLike(like);
+				return contentRepository.save(existingContent);
+			}
+			throw new NotFoundException(UserConstants.contentNotExists);
 		}
-		return contentRepository.save(existingContent);
+		throw new NotFoundException(UserConstants.userNotExists);
 	}
 
+	/**
+	 * Adding dislikes to uploaded content
+	 */
 	@Override
-	public Content addDislikes(int content_id) {
+	public Content addDislikes(int content_id, int user_id) {
 		Content existingContent = contentRepository.findContentById(content_id);
+		Optional<User> existingUser = userRepository.findById(user_id);
 		int dislike = existingContent.getDislike();
-		if (existingContent != null) {
-			++dislike;
-			existingContent.setDislike(dislike);
+		if (existingUser.isPresent()) {
+			if (existingContent != null) {
+				++dislike;
+				existingContent.setDislike(dislike);
+				return contentRepository.save(existingContent);
+			}
+			throw new NotFoundException(UserConstants.contentNotExists);
 		}
-		return contentRepository.save(existingContent);
+		throw new NotFoundException(UserConstants.userNotExists);
 	}
 
 }
