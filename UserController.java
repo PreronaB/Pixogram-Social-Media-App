@@ -1,13 +1,11 @@
 package com.cpg.pixogramspring.controllers;
 
-import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
-import org.hibernate.tool.schema.internal.exec.ScriptSourceInputNonExistentImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,363 +15,315 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.context.annotation.RequestScope;
-import org.springframework.web.multipart.MultipartFile;
 
-import com.cpg.pixogramspring.entities.Comment;
-import com.cpg.pixogramspring.entities.Content;
-import com.cpg.pixogramspring.entities.Followers;
-import com.cpg.pixogramspring.entities.Role;
-//import com.cpg.pixogramspring.entities.Role;
-import com.cpg.pixogramspring.entities.User;
-import com.cpg.pixogramspring.exceptions.ValidationException;
-import com.cpg.pixogramspring.repositories.CommentRepository;
-import com.cpg.pixogramspring.repositories.ContentRepository;
-import com.cpg.pixogramspring.repositories.FollowersRepository;
-import com.cpg.pixogramspring.repositories.UserRepository;
-import com.cpg.pixogramspring.services.ContentService;
+import com.cpg.pixogramspring.constants.UserConstants;
+import com.cpg.pixogramspring.models.Comment;
+import com.cpg.pixogramspring.models.Content;
+import com.cpg.pixogramspring.models.Followers;
+import com.cpg.pixogramspring.models.User;
+import com.cpg.pixogramspring.services.FollowerService;
 import com.cpg.pixogramspring.services.UserService;
 
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 
+
+class Message{
+	private String text;
+	private User user;
+	private List<User> users;
+	private boolean auth;
+	private List<Followers> followers;
+	private List<Content> contents;
+	private List<Comment> comments;
+	
+	
+	
+	public User getUser() {
+		return user;
+	}
+
+	public void setUser(User user) {
+		this.user = user;
+	}
+
+	public boolean isAuth() {
+		return auth;
+	}
+
+	public void setAuth(boolean auth) {
+		this.auth = auth;
+	}
+
+	public Message() {
+		super();
+	}
+
+	public Message(String text) {
+		super();
+		this.text = text;
+	}
+	
+	public String getText() {
+		return text;
+	}
+	public void setText(String text) {
+		this.text = text;
+	}
+	
+	public List<User> getUsers() {
+		return users;
+	}
+	public void setUsers(List<User> users) {
+		this.users = users;
+	}
+
+	public List<Followers> getFollowers() {
+		return followers;
+	}
+
+	public void setFollowers(List<Followers> followers) {
+		this.followers = followers;
+	}
+
+	public List<Content> getContents() {
+		return contents;
+	}
+
+	public void setContents(List<Content> contents) {
+		this.contents = contents;
+	}
+	
+	public List<Comment> getComments() {
+		return comments;
+	}
+
+	public void setComments(List<Comment> comments) {
+		this.comments = comments;
+	}
+
+	@Override
+	public String toString() {
+		return "Message [text=" + text + ", auth=" + auth + "]";
+	}
+	
+}
+@CrossOrigin(origins= "http://localhost:3000")
 @RestController
 @RequestMapping("/api")
+@Api(value = "User", tags = { "UserAPI" })
 public class UserController {
 
 	@Autowired
-	private UserRepository userRepository;
+	public FollowerService followerService;
 	@Autowired
 	private UserService userService;
-	@Autowired
-	private ContentService contentService;
-	@Autowired
-	private ContentRepository contentRepository;
-	@Autowired
-	private CommentRepository commentRepository;
-	@Autowired
-	private FollowersRepository followersRepository;
 
-//.............................................................................................................//
-//...........................................ADMIN AND USER METHOD.....................................................//
-
-	@GetMapping("/pixologin")
-	@ApiOperation(value = "User Login", notes = "enter your email and password", response = User.class)
-	public ResponseEntity<String> loginUser(
-			@ApiParam(value = "Your Email Id to Login", required = true) @RequestParam("email") String email,
-			@ApiParam(value = "Your password to Login", required = true) @RequestParam("password") String password) {
-		User registeredUser = userRepository.findByEmailAndPassword(email, password);
+	/**
+	 * This method can be used by both admin and user Signing in as a user
+	 * 
+	 * @param user
+	 * @return Response Status
+	 */
+	@PostMapping("/login")
+	@ApiOperation(value = "User Login", notes = "Enter your Email and Password", response = User.class)
+	public ResponseEntity<Message> loginUser(@RequestBody User user) {
+		User registeredUser = userService.loginUser(user);
+		Message msg= new Message();
 		if (registeredUser != null) {
-			return new ResponseEntity<String>("Succesfully Logged in", HttpStatus.CREATED);
+			msg.setAuth(true);
+			msg.setText("Successfully Logged In");
+			msg.setUser(registeredUser);
+			//msg.setUsers();
+			return new ResponseEntity<>(msg, HttpStatus.OK);
+			
 		} else
-			return new ResponseEntity<>("Unsuccessful!! Wrong Email or Password", HttpStatus.NOT_FOUND);
+			msg.setAuth(false);
+			msg.setText("Un Successfull!!! Wrong email and password");
+			return new ResponseEntity<>(msg, HttpStatus.OK);
 	}
 
-//.............................................................................................................//
-//...........................................ADMIN METHODS.....................................................//
-
-	@GetMapping("/pixouser/{user_id}")
+	/**
+	 * This method is only for admin Finding a particular user by userId
+	 * 
+	 * @param user_id
+	 * @return user
+	 */
+	@GetMapping("/users/{user_id}")
 	@ApiOperation(value = "Finding user by id", notes = "Provide an id to find user", response = User.class)
 	public ResponseEntity<User> findUserById(
 			@ApiParam(value = "ID value for the user you want to retrieve", required = true) @PathVariable("user_id") int user_id) {
 		ResponseEntity<User> response = null;
-		System.out.println("Recieved id on path: " + user_id);
-		// code here to fetch user by id
-		Optional<User> user = userRepository.findById(user_id);
-		if (user.isPresent()) {
-			User userFound = user.get();
-			response = new ResponseEntity<>(userFound, HttpStatus.OK);
+		User existingUser = userService.getUserById(user_id);
+		if (existingUser != null) {
+			response = new ResponseEntity<>(existingUser, HttpStatus.OK);
 		} else {
 			response = new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 		return response;
 	}
 
-	@GetMapping("/pixouser")
+	/**
+	 * This method is only for admin Finding a particular user by email
+	 * 
+	 * @param email
+	 * @return user
+	 */
+	@GetMapping("/users")
 	@ApiOperation(value = "Finding user by email", notes = "Provide an email to find user", response = User.class)
 	public ResponseEntity<User> findUserByEmail(
 			@ApiParam(value = "Email value for the user you want to retrieve", required = true) @RequestParam("email") String email) {
-		// ResponseEntity<User> response = null;
-		// System.out.println(email);
-		User existingUser = userRepository.findByEmail(email);
+		User existingUser = userService.getUserByEmail(email);
 		if (existingUser == null) {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 		return new ResponseEntity<>(existingUser, HttpStatus.OK);
 	}
 
-	@GetMapping("/pixouserall")
-	@ApiOperation(value = "All users", response = Iterable.class)
-	public List<User> findAllUsers() {
-		return userRepository.findAll();
-	}
-
-	@PostMapping("/pixouseradd")
-	@ApiOperation(value = "Adding user", notes = "Provide all attributes to add user", response = User.class)
-	public ResponseEntity<String> addUser(@RequestBody User user) throws ValidationException {
-		User existingUser = userRepository.findByEmail(user.getEmail());
-		if (existingUser != null) {
-			return new ResponseEntity<String>("User already exists!!", HttpStatus.CONFLICT);
-		}
-		Role role = user.getRole();
-		Role existingRole = userRepository.findRole(user.getRole().getRolename());
-		if (existingRole.getRolename().equals(role.getRolename())) {
-			user.setRole(existingRole);
-		}
-		userService.addUser(user);
-		ResponseEntity<String> re = new ResponseEntity<>("successfully registered user!!", HttpStatus.CREATED);
-		return re;
-	}
-
-	@PostMapping("/pixousers")
-	@ApiOperation(value = "Adding users", notes = "Provide all attributes to add user", response = User.class)
-	public List<User> addUsers(@RequestBody List<User> users) {
-		return userRepository.saveAll(users);
-	}
-
-	@DeleteMapping("/pixouserdel/{user_id}")
-	@ApiOperation(value = "Deleting user", notes = "Provide id to delete user", response = User.class)
-	public ResponseEntity<String> deleteUser(
-			@ApiParam(value = "ID value for the user you want to delete", required = true) @PathVariable("user_id") int user_id) {
-		Optional<User> user = userRepository.findById(user_id);
-		if (user.isPresent()) {
-			userRepository.deleteById(user_id);
-			return new ResponseEntity<String>("Successfully deleted!!", HttpStatus.CREATED);
-		} else
-			return new ResponseEntity<>("User does not exists", HttpStatus.NOT_FOUND);
-	}
-
-	@PutMapping("/pixouserupd")
-	@ApiOperation(value = "Updating user", notes = "Change the attributes you want to user", response = User.class)
-	public ResponseEntity<String> updateUser(@RequestBody User userObj) {
-		// User existingUser = userRepository.findByEmail(userObj.getEmail());
-		Optional<User> user = userRepository.findById(userObj.getUser_id());
-		if (user.isPresent()) {
-			userRepository.save(userObj);
-			return new ResponseEntity<String>("User updated", HttpStatus.CREATED);
-		} else
-			return new ResponseEntity<>("User Not Found", HttpStatus.NOT_FOUND);
-	}
-
-//..............................................................................................................//
-//............................................USER METHODS......................................................//
-
-	@PostMapping("/upload")
-	@ApiOperation(value = "Uploading a file", notes = "Add the file and provide a caption", response = Content.class)
-	public ResponseEntity<String> uploadFile(
-			@ApiParam(value = "Select a file you want to upload", required = true) @RequestParam("file") MultipartFile file,
-			@ApiParam(value = "Caption for file you are uploading", required = true) @RequestParam("caption") String caption,
-			@ApiParam(value = "ID value for the user you want to upload for", required = true) @RequestParam("user_id") int user_id)
-			throws IllegalStateException, IOException {
-		Content existingContent = contentRepository.findByCaption(caption);
-		User existingUser = contentRepository.findUser(user_id);
-		if (existingContent != null) {
-			return new ResponseEntity<String>("Content already exists!!", HttpStatus.CONFLICT);
-		}
-		if (existingUser == null) {
-			return new ResponseEntity<String>("User does not exists!!", HttpStatus.CONFLICT);
-		}
-		contentService.uploadFile(file, caption, user_id);
-		ResponseEntity<String> re = new ResponseEntity<>("Successfully added!!", HttpStatus.CREATED);
-		return re;
-	}
-
-	@GetMapping("/upload/{content_id}")
-	@ApiOperation(value = "Find a file by Id", notes = "Provide an id to find file", response = Content.class)
-	public ResponseEntity<Content> findContent(
-			@ApiParam(value = "ID value for the content you want to retrieve", required = true) @PathVariable("content_id") int content_id) {
-		ResponseEntity<Content> response = null;
-		Optional<Content> content = contentRepository.findById(content_id);
-		if (content.isPresent()) {
-			Content foundContent = content.get();
-			response = new ResponseEntity<>(foundContent, HttpStatus.OK);
+	/**
+	 * This method is only for admin To see All users
+	 * 
+	 * @return user
+	 */
+	@GetMapping("/userall")
+	@ApiOperation(value = "All users", response = User.class)
+	public ResponseEntity<List<User>> findAllUsers() {
+		List<User> users = userService.getAllUsers();
+		if (!users.isEmpty()) {
+			return new ResponseEntity<>(users, HttpStatus.OK);
 		} else {
-			response = new ResponseEntity<>(HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
-		return response;
 	}
 
-	@GetMapping("/uploadsall")
-	@ApiOperation(value = "View whole content", response = Content.class)
-	public List<Content> allContent(Content content) {
-		return contentRepository.findAll();
+	/**
+	 * This method is for admin and user both Adding a user by specifying its role
+	 * 
+	 * @param user
+	 * @return Response Status
+	 */
+	@PostMapping("/useradd")
+	@ApiOperation(value = "Adding user", notes = "Provide all attributes to add user", response = User.class)
+	public ResponseEntity<Message> saveUser(@RequestBody User user) {
+		User existingUser = userService.addUser(user);
+		Message message = new Message();
+		if (existingUser != null) {
+			message.setText(UserConstants.added);
+			message.setUsers(userService.getAllUsers());
+			return new ResponseEntity<>(message, HttpStatus.CREATED);
+		} else {
+			message.setText(UserConstants.userAlreadyExists);
+			return new ResponseEntity<>(message, HttpStatus.CONFLICT);
+		}
 	}
 
-	@DeleteMapping("/uploaddel/{content_id}")
-	@ApiOperation(value = "Deleting a file", notes = "Provide an id to delete file", response = Content.class)
-	public ResponseEntity<String> deleteContent(
-			@ApiParam(value = "ID value for the content you want to delete", required = true) @PathVariable("content_id") int content_id) {
-		Optional<Content> content = contentRepository.findById(content_id);
-		if (content.isPresent()) {
-			contentRepository.deleteById(content_id);
-			return new ResponseEntity<String>("Successfully deleted!!", HttpStatus.CREATED);
+	/**
+	 * This method is only for admin Deleting a user by userId
+	 * 
+	 * @param user_id
+	 * @return Response Status
+	 */
+	@DeleteMapping("/userdel/{user_id}")
+	@ApiOperation(value = "Deleting user", notes = "Provide id to delete user", response = User.class)
+	public Message deleteUser(
+			@ApiParam(value = "ID value for the user you want to delete", required = true) @PathVariable("user_id") int user_id) {
+		userService.deleteUser(user_id);
+		Message message = new Message(UserConstants.deleted);
+		List<User> users=userService.getAllUsers();
+		message.setUsers(users);
+		return message;
+		//return new ResponseEntity<>(UserConstants.deleted, HttpStatus.OK);
+	}
+
+	/**
+	 * This method is for user and admin both Updating user, to make some changes in
+	 * your personal account
+	 * 
+	 * @param user
+	 * @return Response Status
+	 */
+	@PutMapping("/userupd")
+	@ApiOperation(value = "Updating user", notes = "Change the attributes you want to user", response = User.class)
+	public ResponseEntity<String> updateUser(@RequestBody User user) {
+		User existingUser = userService.updateUser(user);
+		if (existingUser != null) {
+			return new ResponseEntity<>(UserConstants.updated, HttpStatus.CREATED);
 		} else
-			return new ResponseEntity<String>("Image/video does not exists", HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(UserConstants.userNotExists, HttpStatus.NOT_FOUND);
 	}
 
-//	@PutMapping("/uploadupd")
-//	@ApiOperation(value = "Updating info", notes = "Change the attributes you want", response = Content.class)
-//	public ResponseEntity<String> updateContent(@RequestParam("content_id") int content_id,
-//			@RequestParam("user_id") int user_id) {
-//		// User existingUser = contentRepository.findUser(user_id);
-//		Content contentObj = contentRepository.findContent(user_id);
-//		if (contentObj != null) {
-//			contentRepository.save(contentObj);
-//			return new ResponseEntity<String>("Changes updated", HttpStatus.CREATED);
-//		} else
-//			return new ResponseEntity<>("Image/Video not found", HttpStatus.NOT_FOUND);
+//....................................................................................................................//
+//............................................USER METHODS............................................................//
+
+	/**
+	 * This method is only for user To follow a particular user
+	 * 
+	 * @param user_id
+	 * @param follower_email
+	 * @param email
+	 * @return Followers
+	 */
+	@PostMapping("/follow")
+	@ApiOperation(value = "Following", notes = "Following users", response = Followers.class)
+//	public ResponseEntity<Followers> follow( @RequestBody Followers followers) {
+////		String follower_email= followers.getFollower__email();
+////		String email =followers.getUser_email();
+////		int user_id= followers.getUser().getUser_id();
+//		Followers follower = followerService.followUser(followers);
+//		return new ResponseEntity<>(follower, HttpStatus.CREATED);
+//	}
+	public ResponseEntity<Followers> follow(
+			@ApiParam(value = "ID value for the user you want to follow", required = true) @RequestParam("user_id") int user_id,
+			@ApiParam(value = "Email id of you", required = true) @RequestParam("follower__email") String follower__email,
+			@ApiParam(value = "Email id of user", required = true) @RequestParam("user_email") String user_email) {
+//		System.out.println(follower__email);
+//		System.out.println(user_email);
+		Followers follower = followerService.followUser(user_id, user_email, follower__email);
+		return new ResponseEntity<>(follower, HttpStatus.CREATED);
+	}
+
+	/**
+	 * This method is only for user To unfollow a particular user
+	 * 
+	 * @param user_id     userId
+	 * @param follower_id followerId
+	 * @return Response status
+	 */
+	@DeleteMapping("/unfollow")
+	@ApiOperation(value = "Un Following", notes = "Un Following users", response = Followers.class)
+	public Message unfollow(
+			@ApiParam(value = "ID value for the user you want to follow", required = true) @RequestParam("user_id") int user_id,
+			@ApiParam(value = "ID value of the follower", required = true) @RequestParam("follower_id") int follower_id) {
+		followerService.unFollowUser(follower_id, user_id);
+		Message message = new Message(UserConstants.unfollowing);
+		List<Followers> followers=followerService.getAllFollowers();
+		message.setFollowers(followers);
+		return message;
+		}
+//	public ResponseEntity<String> unfollow(
+//			@ApiParam(value = "ID value for the user you want to follow", required = true) @RequestParam("user_id") int user_id,
+//			@ApiParam(value = "ID value of the follower", required = true) @RequestParam("follower_id") int follower_id) {
+//		followerService.unFollowUser(follower_id, user_id);
+//		return new ResponseEntity<>(UserConstants.unfollowing, HttpStatus.CREATED);
 //	}
 
-//.............................................................................................................//
-//.........................................USER METHODS ON CONTENTS............................................//
-
-	@PostMapping("/comment")
-	@ApiOperation(value = "Adding Comment", notes = "Commenting on images and videos", response = Content.class)
-	public ResponseEntity<String> addComment(
-			@ApiParam(value = "ID value for the content you want to add comment", required = true) @RequestParam("content_id") int content_id,
-			@ApiParam(value = "ID value for the user you want to add comment", required = true) @RequestParam("user_id") int user_id,
-			@ApiParam(value = "String value the comment you want to add", required = true) @RequestParam("comment") String comment) {
-		Optional<Content> existingContent = contentRepository.findById(content_id);
-		if (existingContent != null) {
-			User existingUser = contentRepository.findUser(user_id);
-			if (existingUser != null) {
-				contentService.commentAdd(user_id, content_id, comment);
-				return new ResponseEntity<>("Comment added", HttpStatus.CREATED);
-			}
-			return new ResponseEntity<>("User does not exist", HttpStatus.NOT_FOUND);
+	/**
+	 * This method is only for users To get all the followers of a particular user
+	 * 
+	 * @param user_id
+	 * @return List of Followers
+	 */
+	@GetMapping("/trackfollowers")
+	@ApiOperation(value = "User Content", notes = "Get a specific user's followers", response = Content.class)
+	public ResponseEntity<List<Followers>> findFollowers(
+			@ApiParam(value = "ID value of the user you want to track", required = true) @RequestParam("user_id") int user_id) {
+		List<Followers> followers = userService.retrieveFollowers(user_id);
+		if (!followers.isEmpty()) {
+			return new ResponseEntity<>(followers, HttpStatus.CREATED);
+		} else {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
-		return new ResponseEntity<>("Content does not exist", HttpStatus.NOT_FOUND);
 	}
 
-	@DeleteMapping("/commentdel/{comment_id}")
-	@ApiOperation(value = "Deleting a file", notes = "Provide an id to delete file", response = Comment.class)
-	public ResponseEntity<String> deleteComment(
-			@ApiParam(value = "ID value for the comment you want to delete", required = true) @PathVariable("comment_id") int comment_id) {
-		Optional<Comment> comment = commentRepository.findById(comment_id);
-		if (comment.isPresent()) {
-			commentRepository.deleteById(comment_id);
-			return new ResponseEntity<String>("Successfully deleted!!", HttpStatus.CREATED);
-		} else
-			return new ResponseEntity<String>("Image/video does not exists", HttpStatus.NOT_FOUND);
-	}
-
-	@PostMapping("/like/add")
-	@ApiOperation(value = "Adding Likes", notes = "Liking the images and videos", response = Content.class)
-	public ResponseEntity<String> addLike(
-			@ApiParam(value = "ID value for the user you want to delete", required = true) @RequestParam("user_id") int user_id,
-			@ApiParam(value = "ID value for the content you want to delete", required = true) @RequestParam("content_id") int content_id) {
-		Content existingContent = contentRepository.findContentById(content_id);
-		User existingUser = contentRepository.findUser(user_id);
-		if (existingContent != null) {
-			if (existingUser != null) {
-				contentService.addLikes(content_id);
-				return new ResponseEntity<>("Like Updated", HttpStatus.CREATED);
-			}
-			return new ResponseEntity<>("User does not exist with respect to Content", HttpStatus.NOT_FOUND);
-		}
-		return new ResponseEntity<>("Content does not exist", HttpStatus.NOT_FOUND);
-	}
-
-	@PostMapping("/dislike/add")
-	@ApiOperation(value = "Adding Dislikes", notes = "Disliking the images and videos", response = Content.class)
-	public ResponseEntity<String> addDislike(@RequestParam("user_id") int user_id,
-			@RequestParam("content_id") int content_id) {
-		Content existingContent = contentRepository.findContentById(content_id);
-		User existingUser = contentRepository.findUser(user_id);
-		if (existingContent != null) {
-			if (existingUser != null) {
-				contentService.addDislikes(content_id);
-				return new ResponseEntity<>("Dislike Updated", HttpStatus.CREATED);
-			}
-			return new ResponseEntity<>("User does not exist with respect to Content", HttpStatus.NOT_FOUND);
-		}
-		return new ResponseEntity<>("Content does not exist", HttpStatus.NOT_FOUND);
-	}
-	/*----------------------------------------editing view methods----------------------------------------*/
-	@GetMapping("/like/view")
-	@ApiOperation(value = "Viewing Likes", notes = "Viewing number of likes on the images and videos", response = Content.class)
-	public int viewLikes(@RequestParam("user_id") int user_id,
-			@RequestParam("content_id") int content_id) throws Exception {
-		User existingUser = contentRepository.findUser(user_id);
-		Content existingContent = contentRepository.findContentById(content_id);
-		if (existingContent != null) {
-			if (existingUser != null) {
-				return existingContent.getLike();
-			}
-			throw new Exception("User does not exist with respect to Content");
-		}
-		throw new Exception("Content does not exist");
-	}
-	
-	@GetMapping("/dislike/view")
-	@ApiOperation(value = "Viewing Dislikes", notes = "Viewing number of dislikes on the images and videos", response = Content.class)
-	public int viewDislikes(@RequestParam("user_id") int user_id,
-			@RequestParam("content_id") int content_id) throws Exception {
-		User existingUser = contentRepository.findUser(user_id);
-		Content existingContent = contentRepository.findContentById(content_id);
-		if (existingContent != null) {
-			if (existingUser != null) {
-				return existingContent.getDislike();
-			}
-			throw new Exception("User does not exist with respect to Content");
-		}
-		throw new Exception("Content does not exist");
-	}
-	
-	@GetMapping("/comments/view")
-	@ApiOperation(value = "Viewing Comments", notes = "Viewing comments on the images and videos", response = Content.class)
-	public List<Comment> viewComments(@RequestParam("user_id") int user_id,
-			@RequestParam("content_id") int content_id) throws Exception {
-		User existingUser = contentRepository.findUser(user_id);
-		Content existingContent = contentRepository.findContentById(content_id);
-		if (existingContent != null) {
-			if (existingUser != null) {
-				return existingContent.getComment();
-			}
-			throw new Exception("User does not exist with respect to Content");
-		}
-		throw new Exception("Content does not exist");
-	}
-	/*--------------follower class methods-----------------------------*/
-	
-	@PostMapping("/follower/follow")
-	public void followUser(@RequestParam("email") String email,
-			@RequestParam("user_id") int user_id) throws Exception {
-		Followers follower=new Followers();
-		User existingUser = userRepository.findByEmail(email);
-		if(existingUser!=null) {
-			Optional<User> existingUserToFollow=userRepository.findById(user_id);
-			if(existingUserToFollow!=null) {
-				//Followers follower=new Followers();
-				
-				follower.setEmail(existingUserToFollow.get().getEmail());
-				//existingUserToFollow.get().getEmail();
-				//existingUser.setEmail(email);
-				
-//				Followers follower=existingUserToFollow.get().getEmail();
-//				existingUser.setFollowers(followers);
-			}
-			else throw new Exception("The user you want to follow does not exist");
-			
-		}
-		else throw new Exception("You need to be a user to be a follower");
-		
-	}
-	
-//	@DeleteMapping("/follower/unfollow")
-//	public void unfollowUser(@RequestParam("email") String email,
-//			@RequestParam("user_id") int user_id) throws Exception {
-//		User existingUser = userRepository.findByEmail(email);
-//		if(existingUser!=null) {
-//			Optional<User> existingUserToFollow=userRepository.findById(user_id);
-//			if(existingUserToFollow!=null) {
-//				followersRepository.deleteById(user_id);
-//				
-//			}
-//			throw new Exception("The user you want to follow does not exist");
-//			
-//		}
-//		throw new Exception("You need to be a user to be a follower");
-//		
-//	}
 }
